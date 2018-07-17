@@ -1,0 +1,210 @@
+<html>
+	<head>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+			}
+		#imageID {
+			top: 0;
+			width: 100%;
+			z-index:1;
+			position:absolute;
+		}
+		canvas{
+			top:0;
+			z-index:-1
+			position:absolute;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -o-crisp-edges;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      -ms-interpolation-mode: nearest-neighbor;
+		}
+		#mapImg{
+			display:none;
+		}
+		</style>
+		<script>
+      var currentHighlight;
+      window.onload = function () {
+      navigator.geolocation.getCurrentPosition(curLoc);
+			//map scaling
+			var ImageMap = function (map, img) {
+				var n,
+				areas = map.getElementsByTagName('area'),
+				len = areas.length,
+				coords = [],
+				previousWidth = 9147;
+				for (n = 0; n < len; n++) {
+					coords[n] = areas[n].coords.split(',');
+				}
+				this.resize = function () {
+					var n, m, clen,
+					x = img.offsetWidth / previousWidth;
+					for (n = 0; n < len; n++) {
+						clen = coords[n].length;
+						for (m = 0; m < clen; m++) {
+							coords[n][m] *= x;
+						}
+						areas[n].coords = coords[n].join(',');
+					}
+					previousWidth = document.body.clientWidth;
+					var resizeCanvas = document.querySelector('canvas');
+					var ctx=resizeCanvas.getContext("2d");
+					var mapImage=document.getElementById("mapImg");
+					resizeCanvas.width=img.offsetWidth;
+					resizeCanvas.height=img.offsetHeight;
+					ctx.imageSmoothingEnabled = false;
+					ctx.drawImage(mapImg,0,0,resizeCanvas.width,resizeCanvas.height)
+          highlight(currentHighlight);
+					return true;
+				};
+				window.onresize = this.resize;
+			},
+			imageMap = new ImageMap(document.getElementById('foxmap'), document.getElementById('imageID'));
+			imageMap.resize();
+			return;
+			//End of map scaling
+			}
+			function curLoc(position) {
+			  NearestBuilding(position.coords.latitude, position.coords.longitude);
+			}
+			function deg2Rad(deg){
+				return deg*Math.PI/180;
+			}
+			function haversineDistance(lat1, lon1, lat2, lon2) {
+			  lat1 = deg2Rad(lat1);
+			  lat2 = deg2Rad(lat2);
+			  lon1 = deg2Rad(lon1);
+			  lon2 = deg2Rad(lon2);
+			  var R = 6371; // Earth's mean radius in km
+			  var x = (lon2 - lon1) * Math.cos((lat1 + lat2) / 2);
+			  var y = (lat2 - lat1);
+			  var d = Math.sqrt(x * x + y * y) * R;
+			  return d;
+			}
+			var buildings = [
+				["byrne",41.719976, -73.936653],
+				["library",41.721880, -73.934180],	
+				["ch",41.720401, -73.935644],
+				["chapel",41.722082, -73.933536],
+				["corn",41.721369, -73.938455],
+				["dn",41.720723, -73.932769],
+				["dy",41.724200, -73.933091],
+				["fn",41.725607, -73.932996],
+				["foy",41.724593, -73.934128],
+				["lf",41.722794, -73.928736],
+				["uf",41.722989, -73.926496],
+				["gs",41.721414, -73.933922],
+				["hc",41.722671, -73.934630],
+				["kieran",41.721784, -73.931943],
+				["kirk",41.723858, -73.935204],
+				["leo",41.719540, -73.936186],
+				["lt",41.723338, -73.932785],
+				["ln",41.722751, -73.935230],
+				["marian",41.721074, -73.934287],
+				["boat",41.720672, -73.938482],
+				["mccann",41.717665, -73.935224],
+				["mr",41.721510, -73.936030],
+				["sc",41.720972, -73.935510],
+				["tmw",41.726812, -73.932930],
+				["ngb",41.727039, -73.933992],
+				["ngc",41.726671, -73.934057],
+				["ngd",41.726182, -73.933740],
+				["rt",41.721386, -73.935381],
+				["ann",41.728101, -73.934378],
+				["peter",41.722560, -73.932724],
+				["ah",41.722374, -73.930143],
+				["sh",41.719268, -73.935669],
+				["sp",41.721482, -73.930848],
+				["tenney",41.719138, -73.932962],
+				["un",41.723574, -73.934718],
+				["lwc",41.720253, -73.929829],
+				["uwc",41.720729, -73.926063]				
+			];
+			function NearestBuilding(lat,lon){
+        var min = Number.MAX_VALUE;
+				var minInd;
+				for(i=0;i<buildings.length;i++){
+					var dif = haversineDistance(lat,lon,buildings[i][1],buildings[i][2]);
+					if(dif<min){
+						minInd=i;
+						min=dif;
+					}
+				}
+				if(min<.04){
+					highlight(minInd);
+        }
+      }
+      function highlight(ind){//send index of building to be highlighted
+        var x = document.getElementById(buildings[ind][0]);
+			  var coordSpl = x.coords.split(',');
+        var ctx = document.querySelector('canvas').getContext('2d');
+        ctx.fillStyle = 'rgba(255,0,0,.25)';
+        ctx.beginPath();
+        ctx.moveTo(coordSpl[0], coordSpl[1]);//go to first coord
+        //for loop
+        for(var i=2;i<coordSpl.length;i+=2){
+          ctx.lineTo(coordSpl[i],coordSpl[i+1]);
+        }
+        ctx.closePath();
+        ctx.fill();
+        currentHighlight=ind;
+      }
+		</script>
+	</head>
+	<body>
+		<canvas></canvas>
+		<img id="mapImg" src="FoxMap.jpg">
+		<img id="imageID" src="blank.gif" alt="Fox Map" usemap = "#foxmap">
+		<map name="foxmap" id="foxmap">
+			<area id="byrne" title="Byrne House" shape="poly" coords="1524,2256,1595,2183,1702,2228,1718,2223,1725,2273,1604,2335,1522,2297" />
+			<area id="library" title="Cannavino Library" shape="poly" coords="4040,2158,3972,2241,3974,2361,3998,2373,4031,2312,4071,2314,4117,2329,4126,2360,4180,2387,4183,2418,4214,2435,4228,2444,4590,2238,4577,2121,4331,2050,4073,2167" />
+			<area id="ch" title="Champagnat Hall" shape="poly" coords="2165,2435,2168,2607,2428,2704,2526,2648,2524,2478,2235,2383" />
+			<area id="chapel" title="Chapel" shape="poly" coords="4605,2243,4549,2274,4554,2317,4618,2346,4637,2379,4739,2413,4868,2371,4872,2224,4836,2214,4811,2257,4759,2252,4756,2127,4726,2131,4717,2245,4678,2258" />
+			<area id="corn" title="Cornell Boathouse" shape="poly" coords="1176,1821,1172,1752,1281,1647,1415,1693,1420,1677,1453,1686,1449,1713,1496,1746,1495,1816,1401,1867,1317,1828,1248,1866" />
+			<area id="dn" title="Donnelly Hall" shape="poly" coords="4674,2728,4750,2682,4854,2665,4898,2687,5056,2685,5223,2719,5339,2797,5343,2844,5341,2923,5248,3002,5198,3019,5122,3025,5025,3022,4971,3071,4913,3063,4896,3083,4826,3061,4824,3035,4787,3031,4792,2968,4724,2923,4648,2903,4632,2870,4629,2828,4640,2754" />
+			<area id="dy" title="Dyson Center" shape="poly" coords="6065,1941,5973,1879,5976,1853,5765,1719,5768,1613,5805,1597,5807,1583,5924,1540,6013,1585,6012,1628,6240,1754,6241,1872" />
+			<area id="fern" title="Fern Tor" shape="poly" coords="7676,1,7691,16,7690,37,7683,55,7688,94,7698,116,7693,129,7708,142,7711,161,7705,171,7688,181,7688,204,7692,217,7678,239,7691,252,7700,269,7688,285,7700,297,7698,324,7677,340,7673,350,7661,346,7636,379,7612,410,7593,449,7560,484,7573,510,7558,537,7527,551,7522,581,7412,565,7363,589,7220,616,7163,555,7225,457,7250,334,7238,331,7218,299,7185,294,7162,252,7130,245,7055,239,7033,255,6936,284,6902,305,6892,347,6782,342,6733,400,6697,447,6633,465,6515,422,6420,424,6325,575,5983,499,5860,435,5840,354,5977,301,6481,4" />
+			<area id="fn" title="Fontaine Hall" shape="poly" coords="6531,1333,6527,1440,6781,1555,6798,1563,6882,1505,6885,1442,6753,1398,6828,1342,6829,1237,6775,1218,6635,1309,6584,1289" />
+			<area id="foy" title="Foy Townhouses" shape="poly" coords="4660,1535,4813,1743,5085,1744,5689,1590,5957,1505,6080,1411,6023,1379,6018,1346,5990,1304,5612,1260,5102,1300,4699,1457,4661,1504" />
+			<area id="lf" title="Fulton Street Townhouses (Lower)" shape="poly" coords="8027,2412,7812,2374,7443,2726,7384,2788,7345,2852,7346,2903,7656,2982,7792,2856,7914,2738,8012,2621,8007,2544,8028,2502" />
+			<area id="uf" title="Fulton Street Townhouses (Upper)" shape="poly" coords="8454,3151,8455,3058,8552,2947,8490,2903,8495,2809,8550,2757,8585,2696,8580,2606,8629,2566,8786,2519,8838,2578,8839,2671,8889,2676,8892,2597,8929,2533,9138,2573,9139,2663,9090,2715,9052,2845,9003,2893,8852,3089,8750,3205" />
+			<area id="sball" title="Gartland Athletic Field" shape="poly" coords="4761,971,5091,1214,6300,638,5901,482" />
+			<area id="gs" title="Greystone Hall" shape="poly" coords="4005,2374,4007,2519,4084,2555,4116,2539,4129,2547,4184,2509,4178,2402,4152,2376,4116,2372,4114,2338,4071,2321,4045,2332,4031,2329" />
+			<area id="hc" title="Hancock Center" shape="poly" coords="3935,1836,3927,2043,4242,2073,4334,2039,4347,2046,4614,1916,4611,1791,4483,1752,4444,1768,4446,1785,4319,1835,4238,1815,4155,1842,4153,1859,4029,1836,3964,1823" />
+			<area id="kieran" title="Kieran Gatehouse" shape="poly" coords="5687,2698,5685,2755,5708,2769,5752,2794,5790,2795,5848,2770,5850,2704,5814,2666,5805,2635,5788,2624,5777,2648,5734,2648,5729,2629,5718,2624,5703,2627,5708,2652" />
+			<area id="kirk" title="Kirk House" shape="poly" coords="4344,1521,4346,1558,4395,1596,4460,1558,4452,1494,4434,1468" />
+			<area id="leo" title="Leo Hall" shape="poly" coords="1557,2709,1462,2681,1415,2706,1184,2635,1180,2462,1263,2403,1610,2520,1604,2682" />
+			<area id="longview" title="Longview Park" shape="poly" coords="1879,1884,1598,1910,1692,1820,1506,1763,1727,1631,1943,1581,2026,1578,2079,1624,2267,1631,2314,1556,2407,1508,2552,1467,2616,1459,2770,1450,2945,1461" />
+			<area id="lt" title="Lowell Thomas Communications Center" shape="poly" coords="5466,2065,5609,2185,6094,2076,6092,1999,5966,1908,5848,1930,5837,1973,5842,1986,5730,2008,5708,1987,5660,1997,5628,1978,5474,1998" />
+			<area id="ln" title="Lower New Townhouses" shape="poly" coords="3856,2009,3861,1968,3891,1945,3891,1935,3922,1920,3928,1852,3866,1818,3774,1771,3745,1808,3731,1830,3731,1855,3691,1871,3660,1858,3650,1861,3630,1852,3595,1891,3593,1938,3824,2013" />
+			<area id="marian" title="Marian Hall" shape="poly" coords="3427,2504,3426,2588,3752,2659,3793,2639,3831,2645,3880,2597,3883,2567,3887,2480,3579,2409" />
+			<area id="boat" title="Marist Boathouse" shape="poly" coords="871,2003,679,1923,680,1905,706,1801,984,1929,956,1924,957,1960" />
+			<area id="mccann" title="The James J. McCann Recreation Center" shape="poly" coords="1062,3710,336,3801,282,3541,394,3526,329,3330,744,3274,757,3240,661,3184,654,3096,784,3002,945,2999,1178,3120,1181,3196,1126,3220,1093,3269,985,3296,929,3323,1055,3574" />
+			<area id="bball" title="McCann Baseball Field" shape="poly" coords="2565,3362,2532,3461,2550,3470,2505,3608,2484,3599,2382,3779,2004,3902,1632,3878,1314,3740,1206,3512,1485,3380,2025,3329,2025,3305,2160,3290,2175,3305,2181,3191,2316,3182,2550,3236,2553,3350" />
+			<area id="mr" title="Midrise Hall" shape="poly" coords="2207,1964,2203,2118,2545,2214,2558,2206,2608,2222,2796,2185,2810,2144,2840,2126,2885,2106,2947,2118,2983,2089,2943,2069,2338,1914,2276,1923" />
+			<area id="sc" title="Murray Student Center/Music Building" shape="poly" coords="2622,2588,2754,2627,2841,2552,2868,2558,3051,2411,3045,2345,2970,2312,2937,2294,2931,2261,2877,2219,2826,2195,2604,2228,2562,2213,2304,2390,2355,2411,2442,2438,2499,2456,2532,2495,2529,2540"  />
+			<area id="tmw" title="Tom & Mary Ward Hall" shape="poly" coords="7084,714,7100,716,7121,726,7352,824,7352,930,7221,1099,7072,1087,6853,958,6873,816" />
+			<area id="ngb" title="Building B" shape="poly" coords="6480,606,6483,497,6515,448,6637,491,6930,577,6989,648,7013,765,6937,780" />
+			<area id="ngc" title="Building C" shape="poly" coords="6306,738,6389,800,6569,862,6583,877,6588,928,6646,954,6777,878,6787,786,6753,725,6706,747,6700,718,6687,711,6665,728,6466,654,6468,626,6445,621,6419,589,6360,623,6306,661" />
+			<area id="ngd" title="Building D" shape="poly" coords="6051,911,6080,952,6078,996,6123,1016,6173,986,6253,1022,6246,1075,6317,1101,6375,1074,6390,1088,6433,1108,6576,1006,6575,880,6563,869,6553,874,6542,857,6445,915,6437,890,6402,899,6148,801,6136,768,6126,748,6070,773,6051,822" />
+			<area id="rt" title="Rotunda" shape="poly" coords="2802,2180,2802,2168,2823,2162,2832,2138,2889,2114,2904,2114,2976,2147,2991,2168,2991,2213,2988,2312,2937,2276,2937,2249,2883,2204,2829,2183"/>
+			<area id="ann" title="St. Ann's Hermitage" shape="poly" coords="6929,353,7124,444,7184,395,7178,359,7171,348,7183,342,7184,306,7080,263,7045,290,7018,271,6929,318" />
+			<area id="peter" title="St. Peter's" shape="poly" coords="5408,2345,5408,2390,5543,2431,5583,2394,5583,2350,5511,2265,5426,2294" />
+			<area id="ah" title="Science and Allied Health Building" shape="poly" coords="6943,2681,6944,2827,7180,2863,7228,2855,7263,2834,7264,2715,7237,2687,7182,2680,7179,2598,7155,2576,7118,2577,7052,2633,6999,2624" />
+			<area id="sh" title="Sheahan Hall" shape="poly" coords="1465,2690,1397,2728,1399,2858,1604,2929,1719,2864,1720,2764" />
+			<area id="sp" title="Steel Plant Studios and Gallery" shape="poly" coords="6100,3186,6140,3168,6188,3197,6231,3181,6251,3187,6557,3021,6556,2969,6549,2941,6492,2922,6435,2948,6402,2943,6354,2937,6293,2938,6174,2884,6121,2884,6086,2923,6006,2959,5926,2993,5923,3058" />
+			<area id="tenney" title="Tenney Stadium at Leonidoff Field" shape="poly" coords="3906,3011,3975,3011,4485,3287,4530,3350,4530,3404,4428,3593,3729,3764,3579,3758,3054,3584,2964,3488,2958,3443,2985,3332,3069,3260,3183,3191,3582,3062,3804,3047" />
+			<area id="tennis" title="Tennis Pavilion" shape="poly" coords="7773,2978,7761,2888,7986,2666,8376,2720,8385,2801,8205,3020" />
+			<area id="under" title="Underpass" shape="poly" coords="6287,2840,6018,2694,5969,2753,6265,2898" />
+			<area id="un" title="Upper New Townhouses" shape="poly" coords="4680,1880,4632,1757,4608,1712,4458,1625,4458,1589,4488,1526,4521,1532,4527,1523,4674,1589,4674,1595,4680,1607,4677,1661,4746,1691,4746,1697,4761,1703,4806,1790,4806,1853,4782,1874" />
+			<area id="lwc" title="West Cedar Townhouses (Lower)" shape="poly" coords="6917,3359,6620,3712,6057,3621,6060,3528,6180,3397,6232,3366,6639,3224,6843,3243,6909,3279" />
+			<area id="uwc" title="West Cedar Townhouses (Upper)" shape="poly" coords="8365,3990,8491,3887,8595,3912,8822,3647,8814,3566,8749,3529,8739,3499,8740,3417,8520,3375,8477,3432,8476,3517,8376,3507,8375,3430,8309,3389,8267,3410,8176,3521,8175,3606,8139,3635,8121,3625,8080,3644,7981,3756,7983,3842,8079,3867,8166,3946" />
+		</map>
+	</body>
+	<footer>
+		<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
+	</footer>
+</html>
