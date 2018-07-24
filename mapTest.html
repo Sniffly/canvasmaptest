@@ -5,25 +5,20 @@
 				margin: 0;
 				padding: 0;
 			}
-		#imageID {
-			top: 0;
-			width: 100%;
-			z-index:1;
-			position:absolute;
-		}
-		canvas{
-			top:0;
-			z-index:-1
-			position:absolute;
-      image-rendering: -moz-crisp-edges;
-      image-rendering: -o-crisp-edges;
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
-      -ms-interpolation-mode: nearest-neighbor;
-		}
-		#mapImg{
-			display:none;
-		}
+      #imageID {
+        top: 0;
+        width: 100%;
+        z-index: 1;
+        position:absolute;
+      }
+      canvas{
+        top:0;
+        z-index:-1
+        position:absolute;
+      }
+      #mapImg{
+        display:none;
+      }
 		</style>
 		<script>
       var currentHighlight;
@@ -55,7 +50,7 @@
 					var mapImage=document.getElementById("mapImg");
 					resizeCanvas.width=img.offsetWidth;
 					resizeCanvas.height=img.offsetHeight;
-					ctx.imageSmoothingEnabled = false;
+          ctx.imageSmoothingQuality = "high"
 					ctx.drawImage(mapImg,0,0,resizeCanvas.width,resizeCanvas.height)
           highlight(currentHighlight);
 					return true;
